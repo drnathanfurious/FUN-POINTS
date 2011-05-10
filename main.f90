@@ -10,8 +10,8 @@ program main
     real*8, dimension(2) :: position ! 2d (x,y) position
   end type point_type
 
-  integer, parameter :: N = 4 ! number of points
-  integer, parameter :: D = 2 ! dimensionality of the problem
+  integer, parameter :: N = 6 ! number of points
+  !integer, parameter :: D = 2 ! dimensionality of the problem
   integer :: i,j,k,l,m ! variables to iterate over
 
   type(point_type), dimension(N) :: points ! all the points
@@ -26,7 +26,14 @@ program main
   ! generate the connectivity matrix filled with distances between points
   call UpdateAdjacencyMatrix(points, adjacency_matrix)
 
+  ! pretty print out the inter-point distances
   i = PrintDistances (adjacency_matrix)
+
+  ! here are the average distances for each point
+  write(*,*) CalculateDistanceAverages(adjacency_matrix)
+
+
+
 
  !!!!! >>> I can't understand what this this is doing... ~ess !!!!!!
 
@@ -54,6 +61,7 @@ program main
   subroutine InitializePoints (points)
     type(point_type), dimension(:), intent(inout) :: points
     real*8 :: rnum  ! random number
+    integer :: i
 
     ! seed some random points
     call random_seed
@@ -83,12 +91,29 @@ program main
     do i=1,num_points-1
       do j=i+1,num_points ! this avoids the matrix diagonal, 
                           !! and the lower half of the matrix.
-
         matrix(i,j) = distance (points(i), points(j))
       end do
     end do
   end subroutine UpdateAdjacencyMatrix
 
+
+
+  ! given an adjacency matrix with the upper triangle filled out,
+  ! here we calculate the averages of distances for each *row*
+  ! in the matrix. 
+  function CalculateDistanceAverages (matrix) result (distances)
+    real*8, dimension(:,:) :: matrix
+    integer :: num_points, row, col
+    real*8, dimension(size(matrix(1,:))-1) :: distances
+    num_points = size(distances)
+
+    ! summation and averaging along each row
+    do row=1,num_points
+      distances(row) = sum(matrix(row,:))/(num_points-row+1)
+    end do
+
+  end function CalculateDistanceAverages
+    
 
   ! calculate the distance between two points in the 2D plane
   function distance (point1, point2)
@@ -101,6 +126,9 @@ program main
      distance = sqrt(sum(temp)) ! sqrt of the sum of the squares... the norm
   end function distance
 
+
+
+  ! pretty printer for inter-point (scalar) distances
   function PrintDistances (matrix) result (stat)
     real*8, dimension(:,:) :: matrix
     integer :: i,j, num_points, stat
@@ -115,7 +143,7 @@ program main
       end do
     end do
 
-    100 format("  (",I2,"--",I2,")  ",f5.2)
+    100 format("  (",I2,"--",I2,")  ",f9.5)
 
     stat = 1
   end function PrintDistances
