@@ -1,3 +1,34 @@
+Wed May 11 21:38:14 CEST 2011
+- Changed Makefile to make it prettier
+- Use compiler flags to specify 8 bytes for every real.  Removed duplicate
+	specifications in main.f90
+- Included nlopt and a dummy optimization routine.
+
+Wed May 11 11:09:30 CEST 2011
+The permutation problem is troubling for me, because given N points we have
+to try and search N! possible permutations of the adjancency matrix.  
+
+Wed May 11 10:38:03 CEST 2011
+Shiny ascii from ess.  I look at his code and realize that he is a LVL 12
+Wizard, while I am only a LVL 2 Druid.
+
+Just so I don't forget, here's how to set up and clone a github repository.  
+
+1.  Make sure your SSH keys are added under
+https://github.com/account/ssh
+
+2.  Add a remote upstream
+git remote add upstream git@github.com:drnathanfurious/FUN-POINTS.git
+
+3.  Clone the repo
+git clone git@github.com:drnathanfurious/FUN-POINTS.git
+
+4.  Fetch upstream changes
+git fetch upstream
+
+I don't think it's necessary to use the 'real*8' syntax if the compiler
+flags specify real as 8 bytes anyway.  But I'll leave that for now.
+
 Tue May 10 21:10:51 CEST 2011
 Added the usual files, plus a BONUS.  The file "oder" shows an error I saw
 while watching another version of this program try and converge.
