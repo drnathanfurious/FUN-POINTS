@@ -14,8 +14,8 @@ implicit none
   type opt_function_type
     integer :: opt ! optimization guy
     integer :: ires ! sucess or failure of nlopt 
-    real :: minf ! minimum fitness found as a result of nlopt's routines
     real :: f_data ! some data you can pass to nlopt
+    real :: minf ! minimum fitness found as a result of nlopt's routines
   end type opt_function_type
 
   ! derived type for data passed to the nlopt function (possible future use)

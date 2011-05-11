@@ -47,13 +47,14 @@ program main
  call InitOptimizationFunction (opt_function, D, size(points))
 
 
- ! some diagnostics
- write (*,*) opt_function%ires
- write (*,*) opt_function%opt
- write (*,*) x
- write (*,*) opt_function%minf
- write (*,*) points
-
+ !!!!!!!!!!!!!!!!!!!! some diagnostics !!!!!!!!!!!!!!!!!!
+ write (*,*) "ires: ", opt_function%ires
+ write (*,*) "opt: ", opt_function%opt       !! this should not be zero by now... if it's
+                                    !! if it is, there's a problem.
+ write (*,*) "flat position array (x): ", x
+ !write (*,*) "minf: ", opt_function%minf
+ write (*,*) "the points structure: ", points
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  !! this is broken... right here! What happened? I swear I didn't touch it!!
  ! start optimization
