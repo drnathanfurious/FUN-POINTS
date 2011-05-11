@@ -4,18 +4,20 @@
 
 program main
 
- use data_types_module
+  ! this just makes things pretty and keeps all the derived types in one place
+  use data_types_module
 
  implicit none
 
+ include 'nlopt.f' ! use nlopt - non-linear optimization routines
 
- include 'nlopt.f' ! use nlopt
-
- type(point_type) :: points(N) ! set of points
+ type(point_type) :: points(N) ! set of points in the system
 
  ! using the idea of an upper triangular adjaceny matrix to track
  ! distances between points...
  real, allocatable :: adjacency_matrix(:,:)
+
+ ! a flattened version of all the positions of the points
  real, allocatable :: x(:)
  integer :: i
 
@@ -44,10 +46,16 @@ program main
  ! initialize the optimization routine
  call InitOptimizationFunction (opt_function, D, size(points))
 
- write (*,*) "test1"
- write (*,*) opt_function
- write (*,*) "test2"
 
+ ! some diagnostics
+ write (*,*) opt_function%ires
+ write (*,*) opt_function%opt
+ write (*,*) x
+ write (*,*) opt_function%minf
+ write (*,*) points
+
+
+ !! this is broken... right here! What happened? I swear I didn't touch it!!
  ! start optimization
  call nlo_optimize(opt_function%ires, opt_function%opt, x, opt_function%minf)
 

@@ -22,9 +22,6 @@ OBJS = data_types.o main.o
 
 all : $(TARGET)
 
-funpoints : $(OBJS)
-	$(F90) $(FFLAGS) -o funpoints $(OBJS) $(LIBS)
-
 $(TARGET) : $(OBJS)
 	$(F90) $(FFLAGS) -o $@ $(OBJS) $(LIBRARY_PATH) $(LIBS)
 
