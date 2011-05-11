@@ -9,12 +9,15 @@ LIBRARY_PATH = -L$(WOODYHOME)/lib
 
 LIBS = -lm -lnlopt
 
-OBJS = main.o
+OBJS = data_types.o main.o 
 
 .SUFFIXES:
 .SUFFIXES: .o .f90
 
 all : $(TARGET)
+
+funpoints : $(OBJS)
+	$(F90) $(FFLAGS) -o funpoints $(OBJS) $(LIBS)
 
 $(TARGET) : $(OBJS)
 	$(F90) $(FFLAGS) -o $@ $(OBJS) $(LIBRARY_PATH) $(LIBS)
@@ -24,3 +27,6 @@ $(TARGET) : $(OBJS)
 
 clean:
 	rm *.o *.mod out
+
+%.o: %.f90
+	$(F90) $(FFLAGS) -c -o $@ $<

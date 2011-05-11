@@ -3,110 +3,82 @@
 ! Solution to this Erdos thing.  You could win $50!
 
 program main
+
+ use data_types_module
+
  implicit none
+
+
  include 'nlopt.f' ! use nlopt
- integer, parameter :: D = 2 ! dimensionality of the problem
- integer, parameter :: N = 6 ! number of points
 
- ! derived type for representing points
-  type point_type
-    integer :: id ! some identifying value
-    real, dimension(D) :: position ! position
-  end type point_type
+ type(point_type) :: points(N) ! set of points
 
-  ! derived type for data passed to the nlopt function (possible future use)
-  type nlo_fdata_type
-    type(point_type), dimension(N) :: points ! points
-    real, dimension(:,:), allocatable :: adjacency_matrix ! adj. matrix
-  end type nlo_fdata_type
+ ! using the idea of an upper triangular adjaceny matrix to track
+ ! distances between points...
+ real, allocatable :: adjacency_matrix(:,:)
+ real, allocatable :: x(:)
+ integer :: i
 
-  integer :: i,j,k,l,m ! variables to iterate over
+ type(opt_function_type) :: opt_function
 
-  type(point_type), dimension(N) :: points ! set of points
-  type(point_type), dimension(N) :: best_points ! set of best points
+ external :: f_opt ! optimization function 
 
-  ! using the idea of an upper triangular adjaceny matrix to track
-  ! distances between points...
-  real, dimension(:,:), allocatable :: adjacency_matrix
-  real, dimension(:), allocatable :: x
-
-  integer :: opt ! optimization guy
-  integer :: ires ! sucess or failure of nlopt 
-  real :: minf ! minimum fitness found as a result of nlopt's routines
-  real :: f_data ! some data you can pass to nlopt
-  external :: f_opt ! optimization function 
-  ires=0
+ opt_function%ires=0
 
 
-  call InitializePoints(points)
-  ! randomly select points in the plane
+ ! randomly select points in the plane
+ call InitializePoints(points)
 
-  ! generate the connectivity matrix filled with distances between points
-  call UpdateAdjacencyMatrix(points, adjacency_matrix)
-    
-  ! pretty print out the inter-point distances
-  i = PrintDistances(adjacency_matrix)
+ ! generate the connectivity matrix filled with distances between points
+ call UpdateAdjacencyMatrix(points, adjacency_matrix)
+   
+ ! pretty print out the inter-point distances
+ i = PrintDistances(adjacency_matrix)
 
-  ! here are the average distances for each point
-  write(*,*) CalculateDistanceAverages(adjacency_matrix)
+ ! here are the average distances for each point
+ !write(*,*) CalculateDistanceAverages(adjacency_matrix)
 
-  ! convert these points to a linear array
-  call PointsToLinearArray(x,points)
-  write(*,*) x
+ ! convert these points to a linear array
+ call PointsToLinearArray(points,x,D)
 
-  ! creat optimization function
-  opt = 0
-  call nlo_create(opt,NLOPT_GN_DIRECT_L,D*N)
-  ! lower bounds
-  call nlo_set_lower_bounds1(ires, opt, -100.0d0)
-  if(ires.lt.0) then
-    write(*,*) "set_lower_bounds failed"
-  end if
-  ! upper bounds
-  call nlo_set_upper_bounds1(ires, opt, 100.0d0)
-  if(ires.lt.0) then
-    write(*,*) "set_upper_bounds failed"
-  end if
-  ! want to minimize the objective function (as opposed to maximize)
-  call nlo_set_min_objective(ires, opt, f_opt, f_data)
-  if(ires.lt.0) then
-    write(*,*) "set_min_objective failed"
-  end if
-  ! stopping criteria... stop when the function changes less than the below
-  ! amount 
-  call nlo_set_ftol_rel(ires, opt, 0.001d0)
-  if(ires.lt.0) then
-    write(*,*) "set_xtol_abs1 failed"
-  end if
+ ! initialize the optimization routine
+ call InitOptimizationFunction (opt_function, D, size(points))
 
-  ! start optimization
-  call nlo_optimize(ires, opt, x, minf)
-  if (ires.lt.0) then 
-    write(*,*) "nlopt failed! This reflects poorly on you."
-  else
-    write(*,*) "found min at ", x
-    write(*,*) "minimum ", minf
-  end if
+ write (*,*) "test1"
+ write (*,*) opt_function
+ write (*,*) "test2"
 
-  ! clean up
-  call nlo_destroy(opt)
+ ! start optimization
+ call nlo_optimize(opt_function%ires, opt_function%opt, x, opt_function%minf)
+
+ if (opt_function%ires.lt.0) then 
+   write(*,*) "nlopt failed! This reflects poorly on you."
+ else
+   write(*,*) "found min at ", x
+   write(*,*) "minimum ", opt_function%minf
+ end if
+
+ ! clean up
+ call nlo_destroy(opt_function%opt)
+
 
 
  contains 
 
   ! converts point datatypes to a 1d array
-  subroutine PointsToLinearArray(x,points)
-    type(point_type), dimension(:), intent(inout) :: points
-    integer :: i,j,num_points
-    real, dimension(:), intent(out), allocatable :: x
+  subroutine PointsToLinearArray(points,x,D)
+    type(point_type) :: points(:)
+    integer :: i,j
+    integer :: num_points,D
+    real, allocatable :: x(:)
 
     num_points = size(points)
-    allocate(x(N*D))
+    allocate (x(num_points*D))
 
     do i=1, num_points
       do j=1, D
         x((i-1)*D+j)=points(i)%position(j)
-        write(*,*) (i-1)*D+j,points(i)%position(j)
+        !write(*,*) (i-1)*D+j,points(i)%position(j)
       end do
     end do
   end subroutine PointsToLinearArray
@@ -114,7 +86,7 @@ program main
 
   ! gives each point in the system a random position
   subroutine InitializePoints (points)
-    type(point_type), dimension(:), intent(inout) :: points
+    type(point_type), intent(inout) :: points(:)
     real :: rnum  ! random number
     integer :: i,j
 
@@ -135,10 +107,10 @@ program main
    ! fills out the adjaceny matrix's upper half (not the diagonal) with 
    ! inter-point distances
   subroutine UpdateAdjacencyMatrix (points, matrix)
-    type(point_type), dimension(:), intent(in) :: points
+    type(point_type), intent(in) :: points(:)
     integer :: num_points
     integer :: i,j
-    real, dimension(:,:), intent(out), allocatable :: matrix
+    real, intent(out), allocatable :: matrix(:,:)
 
     num_points = size(points)
     allocate (matrix(num_points,num_points))
@@ -158,9 +130,9 @@ program main
   ! here we calculate the averages of distances for each *row*
   ! in the matrix. 
   function CalculateDistanceAverages (matrix) result (distances)
-    real, dimension(:,:) :: matrix
+    real :: matrix(:,:)
     integer :: num_points, row, col
-    real, dimension(size(matrix(1,:))-1) :: distances
+    real :: distances(size(matrix(1,:))-1)
     num_points = size(distances)
 
     ! summation and averaging along each row
@@ -174,7 +146,7 @@ program main
   ! calculate the distance between two points in D dimensions
   function distance (point1, point2)
     real :: distance
-    real, dimension(D) :: temp ! the distance vector between the two points
+    real :: temp(D) ! the distance vector between the two points
     type(point_type) :: point1, point2
 
      temp = point2%position(:) - point1%position(:)
@@ -186,7 +158,7 @@ program main
 
   ! pretty printer for inter-point (scalar) distances
   function PrintDistances (matrix) result (stat)
-    real, dimension(:,:) :: matrix
+    real :: matrix(:,:)
     integer :: i,j, num_points, stat
 
     num_points = size(matrix(1,:))
@@ -206,15 +178,54 @@ program main
     stat = 1
   end function PrintDistances
 
+
+  subroutine InitOptimizationFunction (opt_func, D, N)
+    type(opt_function_type), intent(inout) :: opt_func
+    integer, intent(in) :: D, N
+
+    ! create optimization function
+    opt_func%opt = 0
+
+    call nlo_create(opt_func%opt, NLOPT_GN_DIRECT_L, D*N)
+
+    ! lower bounds
+    call nlo_set_lower_bounds1(opt_func%ires, opt_func%opt, -100.0d0)
+    if(opt_func%ires.lt.0) then
+      write(*,*) "set_lower_bounds failed"
+    end if
+
+    ! upper bounds
+    call nlo_set_upper_bounds1(opt_func%ires, opt_func%opt, 100.0d0)
+    if(opt_func%ires.lt.0) then
+      write(*,*) "set_upper_bounds failed"
+    end if
+
+    ! want to minimize the objective function (as opposed to maximize)
+    call nlo_set_min_objective(opt_func%ires, opt_func%opt, f_opt, opt_func%f_data)
+    if(opt_func%ires.lt.0) then
+      write(*,*) "set_min_objective failed"
+    end if
+
+    ! stopping criteria... stop when the function changes less than the below
+    ! amount 
+    call nlo_set_ftol_rel(opt_func%ires, opt_func%opt, 0.001d0)
+    if(opt_func%ires.lt.0) then
+      write(*,*) "set_xtol_abs1 failed"
+    end if
+
+  end subroutine InitOptimizationFunction
+
+
+
   ! incomplete routine to calculate the fitness
   function CalcFitness(points, matrix) result (error)
-    type(point_type), dimension(:), intent(in) :: points
+    type(point_type), intent(in) :: points(:)
     integer :: num_points
     integer :: i,j
-    real, dimension(:,:), intent(in) :: matrix
+    real, intent(in) :: matrix(:,:)
     real :: error
 
-    real, dimension(size(matrix(1,:))-1) :: distances
+    real :: distances(size(matrix(1,:))-1)
     distances = CalculateDistanceAverages(matrix)
 
     num_points = size(points)
