@@ -4,8 +4,14 @@ TARGET = out
 F90 = ifort
 FFLAGS = -m64 -r8 -i8 -fast -opt_report
 
-INCLUDE_PATH = -I$(WOODYHOME)/include
-LIBRARY_PATH = -L$(WOODYHOME)/lib
+ifeq ($(strip $(WOODYHOME)),)
+CASA=$(HOME)
+else
+CASA=$(WOODYHOME)
+endif
+
+INCLUDE_PATH = -I$(CASA)/include
+LIBRARY_PATH = -L$(CASA)/lib
 
 LIBS = -lm -lnlopt
 
