@@ -1,3 +1,13 @@
+Thu 12 May 2011  9:25:28 PST 2011
+Lesson #1 for every programmer, regardless of the language or experience:
+Never use global variables or GOTO statements
+
+Lesson #2 for every programmer using imperative languages with strong type systems and static array sizes that aren't automatically managed for you:
+Learn about memory allocation, passing pointers, actual and dummy arguments, and scope.
+
+
+
+
 Thu May 12 12:40:56 CEST 2011
 Calculating the contributions to the fitness seems to be the key.
 
