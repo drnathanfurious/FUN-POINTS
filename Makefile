@@ -2,7 +2,7 @@
 
 TARGET = out
 F90 = ifort
-FFLAGS = -m64 -r8 -i8 -fast #-opt_report
+FFLAGS = -m64 -r8 -i8 -fast
 
 ifeq ($(strip $(WOODYHOME)),)
 CASA=$(HOME)
@@ -31,5 +31,6 @@ $(TARGET) : $(OBJS)
 clean:
 	rm *.o *.mod out
 
-%.o: %.f90
-	$(F90) $(FFLAGS) -c -o $@ $<
+# What does this line do (besides ruin everything)? -web
+#%.o: %.f90
+#	$(F90) $(FFLAGS) -c -o $@ $<

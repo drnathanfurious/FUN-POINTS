@@ -1,3 +1,41 @@
+Thu May 12 12:40:56 CEST 2011
+Calculating the contributions to the fitness seems to be the key.
+
+The first contribution is how close a line is to other members in its
+group.  The closer they are together, Calculating the contributions to the
+fitness seems to be the key.
+
+Thu May 12 12:25:05 CEST 2011
+I RUINED EVERYTHING! ;)
+I couldn't understand anything about this allocation thing, dynamic
+variables, etc.  I was having a lot of problem passing data to other
+routines.  In any event, I changed all instances I could find where the
+array length wasn't explicity stated and explicitly stated it using the
+parameters N (number of points) and D (dimensionality of the system).
+
+Also moved many functions to the data_types.f90 module.  nlopt requires the
+optimization function be external, so this seems to make it easier to call
+the functions from there.
+
+Couldn't understand what the extra line ess put in the Makefile was all
+about.  I commented it out because it caused things not to compile for me.
+
+Changed optimization routine to the Nelder Mead algorithm.  More testing
+should be done with the different algorithms.  In my experience, the
+following derivitative free types work well for problems like this:
+
+Nelder-Mead
+Subplex
+Principle Axis
+COBYLA
+BOBYQA
+NEWUOA
+CRS2
+
+The optimization function needs to be thought carefully through.  It will
+try to optimize the points in the range [0,1].  These are the minimum and
+maximum bounds passed to nlopt.
+
 Wed May 11 21:38:14 CEST 2011
 - Changed Makefile to make it prettier
 - Use compiler flags to specify 8 bytes for every real.  Removed duplicate
