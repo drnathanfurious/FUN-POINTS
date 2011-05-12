@@ -10,12 +10,13 @@ else
 CASA=$(WOODYHOME)
 endif
 
+# this is SO user-dependent. Why not just set up your paths in your environment using $INCLUDE and $LD_LIBRARY_PATH
 INCLUDE_PATH = -I$(CASA)/include
 LIBRARY_PATH = -L$(CASA)/lib
 
 LIBS = -lm -lnlopt
 
-OBJS = data_types.o main.o 
+OBJS = points.o optimization.o main.o
 
 .SUFFIXES:
 .SUFFIXES: .o .f90
@@ -32,5 +33,6 @@ clean:
 	rm *.o *.mod out
 
 # What does this line do (besides ruin everything)? -web
+#  this line is the same as the .F90.o line... except that you set up Makefiles in a way I haven't seen before... so now it does nothing. -es
 #%.o: %.f90
 #	$(F90) $(FFLAGS) -c -o $@ $<
