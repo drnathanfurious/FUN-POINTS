@@ -1,0 +1,22 @@
+# Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.59)
+AC_INIT(main.f90)
+AM_INIT_AUTOMAKE(funpoints,0.1)
+
+# Checks for programs.
+
+# Checks for libraries.
+AC_CHECK_LIB([m], [cos])
+AC_CHECK_LIB([nlopt], [nlo_create])
+
+# Checks for header files.
+
+# Checks for typedefs, structures, and compiler characteristics.
+#defines FC
+AC_PROG_FC([ifort])
+
+# make sure compiler does freeform files
+AC_FC_FREEFORM
+
+# Checks for library functions.
+AC_OUTPUT([Makefile])
