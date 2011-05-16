@@ -6,6 +6,7 @@ program main
 
   ! this just makes things pretty and keeps all the derived types in one place
   use points_module
+  use stick_module
   use optimization_module
   use sort_module
   implicit none
@@ -25,6 +26,8 @@ program main
   real,target :: adjacency_matrix (number_of_points,number_of_points)
 
   type(opt_function_type) :: opt_function
+
+  type(stick_type) :: sticks(number_of_points * (number_of_points -1) / 2)
   
   integer :: i,j,k
   real :: tmp
@@ -34,6 +37,12 @@ program main
   ! randomly select points in the plane
   call init_random_seed()
   points = InitializePoints(number_of_points,dimensions)
+
+  ! set up the bundle of sticks -- to be used in the monte carlo routine
+  call PrintPoints(points)
+  sticks = BundleSticksFromPoints (points)
+  call InitializeStickGroups(sticks)
+  !call PrintSticks(sticks)
 
   ! assign the points and adjacency matrix to the opt_function structure
   opt_function%f_data%points => points
@@ -49,12 +58,15 @@ program main
     write(*,*) "nlopt failed! This reflects poorly on you."
   else
     !write(*,*) "found min at "
-    call PrintResults(points)
+    !call PrintResults(points)
+    !  call PrintSticks(sticks)
     !do i=1,number_of_points
     !  write(*,*) points(i,:)
     !end do
     write(*,*) "# minimum ", opt_function%minf
   end if
+
+  call PrintPoints(points)
 
   !!!!! clean up
   call nlo_destroy(opt_function%opt)
@@ -76,7 +88,7 @@ program main
         !write(*,*) points(i,:), sticks(k)
         write(*,200) &
             i, j, points(i,:), points(j,:), distance(points(i,:), points(j,:))
-        200 format('(',I2,',',I2,') :: ', '(',2f9.4,')', ' .... ', '(',2f9.4,')', " ---> ", f9.4)
+        200 format('(',2I3') :: ', '(',2f6.3,')', '(',2f6.3,')', " ---> ", f9.4)
         !write(*,*) points(j,:), sticks(k)
         k=k+1
       end do

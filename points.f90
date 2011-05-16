@@ -3,6 +3,7 @@ module points_module
   implicit none
 
 contains
+
   ! Initialize the random seed based on system clock.  Grabbed this off of
   ! some forum somewhere, but seems to be the standard way of doing things.
   subroutine init_random_seed()
@@ -43,6 +44,7 @@ contains
      temp = temp * temp 
      distance = sqrt(sum(temp)) ! sqrt of the sum of the squares... the norm
   end function distance
+
 
   function CalculateDistances (points) result (sticks)
     real :: points(:,:)
@@ -101,6 +103,20 @@ contains
   end function UpdateAdjacencyMatrix
 
 
+  subroutine PrintPoints (points)
+    real :: points (:,:)
+    integer :: N, i, dimensions
+    N = size(points(:,1))
+    dimensions = size(points(1,:))
+
+    do i=1,N
+      write(*,100) points(i,:)
+    end do
+
+    100 format("(",2f8.4,")")
+
+  end subroutine PrintPoints
+
 
   ! pretty printer for inter-point (scalar) distances
   function PrintDistances (matrix) result (stat)
@@ -122,5 +138,7 @@ contains
 
     stat = 1
   end function PrintDistances
+
+
 
 end module points_module
