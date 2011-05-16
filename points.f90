@@ -44,6 +44,23 @@ contains
      distance = sqrt(sum(temp)) ! sqrt of the sum of the squares... the norm
   end function distance
 
+  function CalculateDistances (points) result (sticks)
+    real :: points(:,:)
+    real :: sticks(size(points(:,1))*(size(points(:,1))-1))
+    integer :: i,j,k, N
+
+    N = size(points(:,1))
+
+    ! first calculate the lengths of all the sticks
+    k=1
+    do i=1,N-1
+      do j=i+1,N
+        sticks(k) = distance(points(i,:), points(j,:))
+        k=k+1
+      end do
+    end do
+
+  end function CalculateDistances
 
   ! given an adjacency matrix with the upper triangle filled out,
   ! here we calculate the averages of distances for each *row*

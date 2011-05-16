@@ -65,16 +65,19 @@ program main
   subroutine PrintResults(points) 
     real, intent(in), dimension(:,:) :: points
     integer :: i,j,k,N
-    real :: sticks(size(points(:,1))*(size(points(:,1))-1)/2)
+    !real :: sticks(size(points(:,1))*(size(points(:,1))-1)/2)
     integer :: natural_order(size(points(:,1))*(size(points(:,1))-1)/2)
     N = size(points(:,1))
     ! calculate lengths of all the sticks
     k=1
     do i=1,N-1
       do j=i+1,N
-        sticks(k) = distance(points(i,:), points(j,:))
-        write(*,*) points(i,:), sticks(k)
-        write(*,*) points(j,:), sticks(k)
+        !sticks(k) = distance(points(i,:), points(j,:))
+        !write(*,*) points(i,:), sticks(k)
+        write(*,200) &
+            i, j, points(i,:), points(j,:), distance(points(i,:), points(j,:))
+        200 format('(',I2,',',I2,') :: ', '(',2f9.4,')', ' .... ', '(',2f9.4,')', " ---> ", f9.4)
+        !write(*,*) points(j,:), sticks(k)
         k=k+1
       end do
     end do

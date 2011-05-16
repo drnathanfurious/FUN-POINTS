@@ -1,6 +1,8 @@
 
 module optimization_module
-  use points_module
+  use points_module, only: CalculateDistanceAverages, &
+                           distance, &
+                           CalculateDistances
   use sort_module
 
   implicit none
@@ -117,12 +119,15 @@ module optimization_module
 
 
   ! fitness function for nlopt
-  subroutine f_opt(res, number_of_points, points, grad, need_gradient, f_data)
-    type(nlo_fdata_type) :: f_data
+  ! points doesn't get used anymore... in the subroutine. Is there a way to get it out of the
+  ! argument list altogether?
+  subroutine f_opt(fitness, number_of_points, points, grad, need_gradient, f_data)
+    real, intent(out) :: fitness
+    type(nlo_fdata_type), intent(in) :: f_data
+    real, intent(in) :: grad(size(f_data%points(:,1))) , points(:,:) !, points(size(f_data%points(:,1)),size(f_data%points(1,:))) 
     integer :: number_of_points,need_gradient,i,j,k
-    real :: points(size(f_data%points(:,1)),size(f_data%points(1,:))), grad(size(f_data%points(:,1)))
-    real, intent(out) :: res ! fitness
     real points_tmp(size(f_data%points(:,1)),size(f_data%points(1,:)))
+
     ! sticks is a list of all the distances
     real :: sticks(size(f_data%points(:,1))*(size(f_data%points(:,1))-1)/2)
 
@@ -135,13 +140,7 @@ module optimization_module
     D = size(f_data%points(1,:))
 
     ! first calculate the lengths of all the sticks
-    k=1
-    do i=1,N-1
-      do j=i+1,N
-        sticks(k) = distance(points(i,:), points(j,:))
-        k=k+1
-      end do
-    end do
+    sticks = CalculateDistances (f_data%points)
 
     ! Sort the sticks.  The variable natural_order is returned by the sort
     ! command, it tells how the rows were changed.
@@ -157,19 +156,19 @@ module optimization_module
     end do
 
     ! based upon this average, the fitness can be calculated
-    res=0
+    fitness=0
     k=1
     do i=1,N-1
       do j=i+1,N
-        res = res + abs(sticks(natural_order(k)) - stickavg(j))
+        fitness = fitness + abs(sticks(natural_order(k)) - stickavg(j))
         k=k+1
       end do
     end do
 
     do i=1,N-2
-      res = res + abs(stickavg(i)-stickavg(i+1))
+      fitness = fitness + abs(stickavg(i)-stickavg(i+1))
     end do
-    res = res + abs(stickavg(1)-stickavg(N-1))
+    fitness = fitness + abs(stickavg(1)-stickavg(N-1))
 
   end subroutine f_opt
   

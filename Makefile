@@ -16,7 +16,7 @@ LIBRARY_PATH = -L$(CASA)/lib
 
 LIBS = -lm -lnlopt
 
-OBJS = points.o optimization.o main.o
+OBJS = points.o sort.o optimization.o main.o
 
 .SUFFIXES:
 .SUFFIXES: .o .f90
