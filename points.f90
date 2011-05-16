@@ -103,18 +103,27 @@ contains
   end function UpdateAdjacencyMatrix
 
 
+  ! pretty printer for a single point
+  subroutine PrintPoint (point)
+    real :: point(:)
+    integer :: i
+
+    write (*,"(A)",advance="no") "("
+    do i=1,size(point)
+      write (*,"(f6.3)",advance="no") point(i)
+    end do
+    write (*,*) ")"
+  end subroutine PrintPoint
+
+
+  ! print all the points of a group
   subroutine PrintPoints (points)
     real :: points (:,:)
-    integer :: N, i, dimensions
-    N = size(points(:,1))
-    dimensions = size(points(1,:))
+    integer :: i
 
-    do i=1,N
-      write(*,100) points(i,:)
+    do i=1,size(points(:,1))
+      call PrintPoint (points(i,:))
     end do
-
-    100 format("(",2f8.4,")")
-
   end subroutine PrintPoints
 
 
