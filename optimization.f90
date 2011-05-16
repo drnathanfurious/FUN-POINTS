@@ -122,6 +122,7 @@ module optimization_module
   ! points doesn't get used anymore... in the subroutine. Is there a way to get it out of the
   ! argument list altogether?
   subroutine f_opt(fitness, number_of_points, points, grad, need_gradient, f_data)
+
     real, intent(out) :: fitness
     type(nlo_fdata_type), intent(in) :: f_data
     real, intent(in) :: grad(size(f_data%points(:,1))) , points(:,:) !, points(size(f_data%points(:,1)),size(f_data%points(1,:))) 
@@ -129,29 +130,29 @@ module optimization_module
     real points_tmp(size(f_data%points(:,1)),size(f_data%points(1,:)))
 
     ! sticks is a list of all the distances
-    real :: sticks(size(f_data%points(:,1))*(size(f_data%points(:,1))-1)/2)
+    real :: distances(size(f_data%points(:,1))*(size(f_data%points(:,1))-1)/2)
 
     integer :: natural_order(size(f_data%points(:,1))*(size(f_data%points(:,1))-1)/2)
     ! stickavg is a list of all the averages for the n-1 groupings
-    real :: stickavg(size(f_data%points(:,1))-1)
+    real :: avg_distance(size(f_data%points(:,1))-1)
 
     integer :: N, D
     N = size(f_data%points(:,1))
     D = size(f_data%points(1,:))
 
     ! first calculate the lengths of all the sticks
-    sticks = CalculateDistances (f_data%points)
+    distances = CalculateDistances (f_data%points)
 
     ! Sort the sticks.  The variable natural_order is returned by the sort
     ! command, it tells how the rows were changed.
-    call Qsort(sticks,natural_order)
+    call Qsort(distances,natural_order)
 
     ! Use this sorted list to define the grouping.  This leads to similiar
     ! lengths being naturally grouped together
     k=1
     do i=1,N-1
       !write(*,*) k, k+i-1, i
-      stickavg(i) = sum(sticks(k:k+i-1))/i
+      avg_distance(i) = sum(distances(k:k+i-1))/i
       k = k+i
     end do
 
@@ -160,15 +161,15 @@ module optimization_module
     k=1
     do i=1,N-1
       do j=i+1,N
-        fitness = fitness + abs(sticks(natural_order(k)) - stickavg(j))
+        fitness = fitness + abs(distances(natural_order(k)) - avg_distance(j))
         k=k+1
       end do
     end do
 
     do i=1,N-2
-      fitness = fitness + abs(stickavg(i)-stickavg(i+1))
+      fitness = fitness + abs(avg_distance(i)-avg_distance(i+1))
     end do
-    fitness = fitness + abs(stickavg(1)-stickavg(N-1))
+    fitness = fitness + abs(avg_distance(1)-avg_distance(N-1))
 
   end subroutine f_opt
   

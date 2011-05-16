@@ -37,21 +37,23 @@ program main
   ! randomly select points in the plane
   call init_random_seed()
   points = InitializePoints(number_of_points,dimensions)
+  ! assign the points and adjacency matrix to the opt_function structure
+  opt_function%f_data%points => points
+  opt_function%f_data%adjacency_matrix => adjacency_matrix
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! set up the bundle of sticks -- to be used in the monte carlo routine
   call PrintPoints(points)
   sticks = BundleSticksFromPoints (points)
   call InitializeStickGroups(sticks)
   !call PrintSticks(sticks)
 
-  ! assign the points and adjacency matrix to the opt_function structure
-  opt_function%f_data%points => points
-  opt_function%f_data%adjacency_matrix => adjacency_matrix
 
   ! initialize the optimization routine
   call InitOptimizationFunction(opt_function)
 
-  !!!!! start optimization
+  !!!!!!!!!!!!!!!!!!!!!! 
+  ! start optimization !
   call nlo_optimize(opt_function%ires, opt_function%opt, points, opt_function%minf)
 
   if (opt_function%ires.lt.0) then 
