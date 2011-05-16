@@ -1,6 +1,7 @@
 
 module optimization_module
   use points_module
+  use sort_module
 
   implicit none
 
@@ -65,7 +66,7 @@ module optimization_module
 
     ! stopping criteria... 
     ! not sure whether ftol or xtol works better
-    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-12)
+    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-16)
     if(opt_func%ires.lt.0) then
       write(*,*) "set_xtol_abs1 failed"
     end if
@@ -116,18 +117,60 @@ module optimization_module
 
 
   ! fitness function for nlopt
-  subroutine f_opt(res, en, x, grad, need_gradient, f_data)
+  subroutine f_opt(res, number_of_points, points, grad, need_gradient, f_data)
     type(nlo_fdata_type) :: f_data
-    integer :: en,need_gradient,i,j,k
-    real :: x(en), grad(en)
-    real, intent(out) :: res
-  
-    ! convert this linear array of points back into a points structure
-    ! (seems wasteful)
-    ! it's not really very wasteful... but it is unecessary ~es
-    f_data%adjacency_matrix = UpdateAdjacencyMatrix(f_data%points)
-    ! All the important fitness stuff is calculated in CalcFitness
-    res = CalcFitness(f_data%points, f_data%adjacency_matrix)
+    integer :: number_of_points,need_gradient,i,j,k
+    real :: points(size(f_data%points(:,1)),size(f_data%points(1,:))), grad(size(f_data%points(:,1)))
+    real, intent(out) :: res ! fitness
+    real points_tmp(size(f_data%points(:,1)),size(f_data%points(1,:)))
+    ! sticks is a list of all the distances
+    real :: sticks(size(f_data%points(:,1))*(size(f_data%points(:,1))-1)/2)
+
+    integer :: natural_order(size(f_data%points(:,1))*(size(f_data%points(:,1))-1)/2)
+    ! stickavg is a list of all the averages for the n-1 groupings
+    real :: stickavg(size(f_data%points(:,1))-1)
+
+    integer :: N, D
+    N = size(f_data%points(:,1))
+    D = size(f_data%points(1,:))
+
+    ! first calculate the lengths of all the sticks
+    k=1
+    do i=1,N-1
+      do j=i+1,N
+        sticks(k) = distance(points(i,:), points(j,:))
+        k=k+1
+      end do
+    end do
+
+    ! Sort the sticks.  The variable natural_order is returned by the sort
+    ! command, it tells how the rows were changed.
+    call Qsort(sticks,natural_order)
+
+    ! Use this sorted list to define the grouping.  This leads to similiar
+    ! lengths being naturally grouped together
+    k=1
+    do i=1,N-1
+      !write(*,*) k, k+i-1, i
+      stickavg(i) = sum(sticks(k:k+i-1))/i
+      k = k+i
+    end do
+
+    ! based upon this average, the fitness can be calculated
+    res=0
+    k=1
+    do i=1,N-1
+      do j=i+1,N
+        res = res + abs(sticks(natural_order(k)) - stickavg(j))
+        k=k+1
+      end do
+    end do
+
+    do i=1,N-2
+      res = res + abs(stickavg(i)-stickavg(i+1))
+    end do
+    res = res + abs(stickavg(1)-stickavg(N-1))
+
   end subroutine f_opt
   
 end module optimization_module

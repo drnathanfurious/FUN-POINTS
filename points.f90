@@ -3,6 +3,18 @@ module points_module
   implicit none
 
 contains
+  ! Initialize the random seed based on system clock.  Grabbed this off of
+  ! some forum somewhere, but seems to be the standard way of doing things.
+  subroutine init_random_seed()
+    integer :: i, n, clock 
+    integer, dimension(:), allocatable :: seed 
+    call random_seed(size = n) 
+    allocate(seed(n)) 
+    call system_clock(count=clock) 
+    seed = clock + 37 * (/ (i - 1, i = 1, n) /) 
+    call random_seed(put = seed) 
+    deallocate(seed) 
+  end subroutine init_random_seed
 
   ! gives each point in the system a random position
   function InitializePoints (num_points,dimensions) result (points)
@@ -11,7 +23,6 @@ contains
     real :: rnum  ! random number
 
     ! seed some random points
-    call random_seed
     do i=1,num_points
       ! give random a random coordinate in N-dimensions of the problem
       do j=1,dimensions
