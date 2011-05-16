@@ -13,7 +13,14 @@ AC_CHECK_LIB([nlopt], [nlo_create])
 
 # Checks for typedefs, structures, and compiler characteristics.
 #defines FC
-AC_PROG_FC([ifort])
+AC_PROG_FC([], 90)
+if test X"$FC" = X"gfortran"; then
+  FCFLAGS="$FCFLAGS -fdefault-integer-8 -fdefault-real-8"
+fi
+
+if test X"$FC" = X"ifort"; then
+  FCFLAGS="$FCFLAGS -fast -i8 -d8"
+fi
 
 # make sure compiler does freeform files
 AC_FC_FREEFORM
