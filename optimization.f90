@@ -58,7 +58,7 @@ module optimization_module
 
     ! stopping criteria... 
     ! not sure whether ftol or xtol works better
-    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-25)
+    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-14)
     if(opt_func%ires.lt.0) then
       write(*,*) "set_xtol_abs1 failed"
     end if
@@ -127,6 +127,9 @@ module optimization_module
     ! Sort the distances.  The variable natural_order is returned by the sort
     ! command, it tells how the rows were changed.
     call Qsort(distances,natural_order)
+    write (*,*) distances
+    write (*,*)
+    write (*,*) natural_order
 
     fitness = CalcFitness(f_data%number_of_points,distances,natural_order)
 
@@ -157,12 +160,15 @@ module optimization_module
         k = k+i
       end do
   
+
       ! based upon this average, the fitness can be calculated
       fitness=0
       k=1
       do i=1,N-1
         do j=i+1,N
           fitness = fitness + abs(distances(groupings(k)) - avg_distances(j))
+          !fitness = fitness + abs((distances(groupings(k)) - &
+            !avg_distances(j))/(0.5*(distances(groupings(k)) + avg_distances(j))) )
           k=k+1
         end do
       end do
@@ -171,6 +177,7 @@ module optimization_module
         fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
       end do
       fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
+
   end function CalcFitness
 
   

@@ -39,8 +39,8 @@ program main
   opt_function%f_data%number_of_points = number_of_points
   opt_function%f_data%dimensions = dimensions
 
-  call PrintPoints(points)
   call RunOptimization (opt_function, points)
+  call PrintPoints(points)
   call PrintResults(points)
 
 

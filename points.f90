@@ -108,11 +108,11 @@ contains
     real :: point(:)
     integer :: i
 
-    write (*,"(A)",advance="no") "("
+    !write (*,"(A)",advance="no") "("
     do i=1,size(point)
       write (*,"(f6.3)",advance="no") point(i)
     end do
-    write (*,*) ")"
+    write (*,*)
   end subroutine PrintPoint
 
 
