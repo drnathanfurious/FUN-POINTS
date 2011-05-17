@@ -28,6 +28,7 @@ program main
   ! distances between points...
   real,target :: adjacency_matrix (number_of_points,number_of_points)
   real,target :: distances(number_of_points*(number_of_points-1)/2)
+
   ! The optimization function data to be passed around during the minimization
   type(opt_function_type) :: opt_function
 
@@ -52,6 +53,7 @@ program main
   call PrintPoints(points)
   call RunOptimization (opt_function, points)
   call PrintPoints(points)
+  call PrintResults(points)
 
 
 
@@ -69,19 +71,22 @@ program main
     real, intent(in), dimension(:,:) :: points
     integer :: i,j,k,N
     !real :: sticks(size(points(:,1))*(size(points(:,1))-1)/2)
-    integer :: natural_order(size(points(:,1))*(size(points(:,1))-1)/2)
+    !integer :: natural_order(size(points(:,1))*(size(points(:,1))-1)/2)
     N = size(points(:,1))
     ! calculate lengths of all the sticks
     k=1
     do i=1,N-1
       do j=i+1,N
-        !sticks(k) = distance(points(i,:), points(j,:))
-        !write(*,*) points(i,:), sticks(k)
+
         write(*,200) &
-            i, j, points(i,:), points(j,:), distance(points(i,:), points(j,:))
+            i, j,    &
+            points(i,:), points(j,:),   &
+            distance(points(i,:), points(j,:))
+
         200 format('(',2I3') :: ', '(',2f6.3,')', '(',2f6.3,')', " ---> ", f9.4)
-        !write(*,*) points(j,:), sticks(k)
+
         k=k+1
+
       end do
     end do
 

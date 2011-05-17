@@ -27,19 +27,13 @@ module optimization_module
   ! subroutines made avaliable to alles
   contains
 
-  ! dumby function
-  ! Print the results to a file such that you can generate a pretty colored 
-  ! plot.  Gnuplot will work for this.
-  !subroutine PrintResults(points)
-  ! 
-  !end subroutine PrintResults
 
   ! initialize optimization function
   subroutine InitOptimizationFunction (opt_func)
     type(opt_function_type), intent(inout) :: opt_func
     integer :: N, D
-    N = size(opt_func%f_data%points(:,1))
-    D = size(opt_func%f_data%points(1,:))
+    N = opt_func%f_data%number_of_points
+    D = opt_func%f_data%dimensions
 
     ! randomly select points in the plane
     call init_random_seed()
@@ -116,42 +110,6 @@ module optimization_module
   end subroutine RunOptimization
 
 
-  ! fitness function
-  function CalcFitness(points, matrix) result (error)
-    real :: points(:,:)
-    integer :: i,j,N
-    real :: matrix(:,:)
-    real :: error
-    real :: distances(size(points(:,1))-1)  !!! see how N is set... below
-
-    N = size(points(:,1)) !!! check this... is the extent to N or N-1?
-
-    distances = CalculateDistanceAverages(matrix)
-
-    error = 0
-    ! first contribution: how close the line distance is to other members
-    ! in its group
-    do i=1, N-1
-      do j=i+1, N
-        error = error + abs(matrix(i,j)-distances(i))**2
-      end do
-    end do
-
-    ! the above tends to converge on results where all the points are
-    ! exactly the same, so introduce a reward for not being too close to
-    ! other distances
-    do i=1, N-2
-       error = error - abs(distances(i)-distances(i+1))
-    end do
-    error = error - abs(distances(N-2)-distances(1))
-
-    ! penalty for very small distances
-    do i=1, N-1
-       if(distances(i) .lt. 0.001d0) error = error+10000
-    end do
-
-  end function CalcFitness 
-
 
 
   ! fitness function for nlopt
@@ -171,9 +129,6 @@ module optimization_module
     integer :: natural_order(                                                &
                   f_data%number_of_points * (f_data%number_of_points-1) / 2  &
                )
-    ! avg_distances is a list of all the averages for the n-1 groupings
-    !real :: avg_distances(size(f_data%points(:,1))-1)
-    real :: avg_distances(f_data%number_of_points-1)
 
     integer :: i,j,k
     integer :: N   ! number of points, again :)
@@ -186,31 +141,50 @@ module optimization_module
     ! command, it tells how the rows were changed.
     call Qsort(distances,natural_order)
 
-    ! Use this sorted list to define the grouping.  This leads to similiar
-    ! lengths being naturally grouped together
-
-    k=1
-    do i=1,N-1
-      !write(*,*) k, k+i-1, i
-      avg_distances(i) = sum(distances(k:k+i-1))/i
-      k = k+i
-    end do
-
-    ! based upon this average, the fitness can be calculated
-    fitness=0
-    k=1
-    do i=1,N-1
-      do j=i+1,N
-        fitness = fitness + abs(distances(natural_order(k)) - avg_distances(j))
-        k=k+1
-      end do
-    end do
-
-    do i=1,N-2
-      fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
-    end do
-    fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
+    fitness = CalcFitness(N,distances,natural_order)
 
   end subroutine f_opt
+
+
+
+
+
+
+  function CalcFitness (N,distances,groupings) result (fitness)
+      real :: fitness
+      integer :: N
+      real :: distances(N*(N-1)/2)
+      ! avg_distances is a list of all the averages for the n-1 groupings
+      !real :: avg_distances(size(f_data%points(:,1))-1)
+      real :: avg_distances(N-1)
+      integer :: groupings(N*(N-1)/2)
+      integer :: i,j,k
+
+
+      ! Use this sorted list to define the grouping.  This leads to similiar
+      ! lengths being naturally grouped together
+      k=1
+      do i=1,N-1
+        !write(*,*) k, k+i-1, i
+        avg_distances(i) = sum(distances(k:k+i-1))/i
+        k = k+i
+      end do
+  
+      ! based upon this average, the fitness can be calculated
+      fitness=0
+      k=1
+      do i=1,N-1
+        do j=i+1,N
+          fitness = fitness + abs(distances(groupings(k)) - avg_distances(j))
+          k=k+1
+        end do
+      end do
+  
+      do i=1,N-2
+        fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
+      end do
+      fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
+  end function CalcFitness
+
   
 end module optimization_module
