@@ -48,7 +48,6 @@ program main
   opt_function%f_data%dimensions = dimensions
   opt_function%f_data%points => points
   opt_function%f_data%adjacency_matrix => adjacency_matrix
-  opt_function%f_data%distances => distances
 
   call PrintPoints(points)
   call RunOptimization (opt_function, points)

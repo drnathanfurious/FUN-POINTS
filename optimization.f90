@@ -15,7 +15,6 @@ module optimization_module
     integer :: dimensions
     real,pointer :: points(:,:) ! positions in the system
     real,pointer :: adjacency_matrix(:,:) ! adj. matrix of inter-point distances
-    real,pointer :: distances(:)  ! list of distances between points
   end type nlo_fdata_type
 
   type opt_function_type
@@ -42,6 +41,8 @@ module optimization_module
     N = size(opt_func%f_data%points(:,1))
     D = size(opt_func%f_data%points(1,:))
 
+    ! randomly select points in the plane
+    call init_random_seed()
 
     ! create optimization function
     opt_func%opt = 0
@@ -146,7 +147,7 @@ module optimization_module
 
     ! penalty for very small distances
     do i=1, N-1
-       if(distances(i) .lt. 0.1d0) error = error+10000
+       if(distances(i) .lt. 0.001d0) error = error+10000
     end do
 
   end function CalcFitness 
@@ -154,43 +155,44 @@ module optimization_module
 
 
   ! fitness function for nlopt
-  subroutine f_opt (fitness, number_of_points, points, grad, need_gradient, f_data)
-    type(nlo_fdata_type),intent(inout) :: f_data  
-    real, intent(out) :: fitness
-    integer,intent(in) :: number_of_points
-    real,intent(inout) :: points(f_data%number_of_points,f_data%number_of_points)
-    !real,intent(inout) :: points(size(f_data%points(:,1)),size(f_data%points(:,1)))
-    real,intent(in) :: grad(f_data%number_of_points)
-    integer, intent(in) :: need_gradient
+  subroutine f_opt(fitness, number_of_points, points, grad, need_gradient, f_data)
+    type(nlo_fdata_type) :: f_data
+    real, intent(out) :: fitness ! fitness
+    integer :: number_of_points
+    real :: points(f_data%number_of_points,f_data%dimensions)
+    real :: grad(f_data%number_of_points)
+    integer :: need_gradient
 
-    ! a list of all the distances between points
-    ! N*(N-1)/2 distances connecting N points
-    real :: distances(f_data%number_of_points * (f_data%number_of_points-1) / 2)
+    ! distances is a list of all the distances
+    real :: distances(          &
+                      f_data%number_of_points * (f_data%number_of_points-1) / 2  &
+                     )
+
+    integer :: natural_order(                                                &
+                  f_data%number_of_points * (f_data%number_of_points-1) / 2  &
+               )
+    ! avg_distances is a list of all the averages for the n-1 groupings
+    !real :: avg_distances(size(f_data%points(:,1))-1)
+    real :: avg_distances(f_data%number_of_points-1)
+
     integer :: i,j,k
-
-    integer :: natural_order(f_data%number_of_points * (f_data%number_of_points-1) / 2)
-
-    ! avg_distance is a list of all the averages for the N-1 groupings
-    real :: avg_distance(f_data%number_of_points-1)
-
-    integer :: N, D ! number of points, and problem dimensionality
+    integer :: N   ! number of points, again :)
     N = f_data%number_of_points
-    D = f_data%dimensions
 
-    ! first calculate the lengths of all the distances
+
     distances = CalculateDistances(points)
 
     ! Sort the distances.  The variable natural_order is returned by the sort
     ! command, it tells how the rows were changed.
     call Qsort(distances,natural_order)
-    !write (*,*) natural_order
 
     ! Use this sorted list to define the grouping.  This leads to similiar
     ! lengths being naturally grouped together
+
     k=1
     do i=1,N-1
       !write(*,*) k, k+i-1, i
-      avg_distance(i) = sum(distances(k:k+i-1))/i
+      avg_distances(i) = sum(distances(k:k+i-1))/i
       k = k+i
     end do
 
@@ -199,15 +201,15 @@ module optimization_module
     k=1
     do i=1,N-1
       do j=i+1,N
-        fitness = fitness + abs(distances(natural_order(k)) - avg_distance(j))
+        fitness = fitness + abs(distances(natural_order(k)) - avg_distances(j))
         k=k+1
       end do
     end do
 
     do i=1,N-2
-      fitness = fitness + abs(avg_distance(i)-avg_distance(i+1))
+      fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
     end do
-    fitness = fitness + abs(avg_distance(1)-avg_distance(N-1))
+    fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
 
   end subroutine f_opt
   
