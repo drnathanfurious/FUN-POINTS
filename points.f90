@@ -34,6 +34,49 @@ contains
   end function InitializePoints
 
 
+
+  ! initialize the groupings of pair of points
+  function InitPairGroupings (N) result (groupings)
+    integer :: groupings(N*(N-1)/2, 3)
+    integer :: N, i,j,pair
+
+    pair = 1
+    do i=1,N-1
+      do j = i+1,N
+        groupings(pair,1) = i
+        groupings(pair,2) = j
+        groupings(pair,3) = i
+        pair = pair + 1
+      end do
+    end do
+
+  end function InitPairGroupings
+
+
+  ! grab the pairs of points for a particular group
+  ! the returned list from this function is a list of pairs of points
+  ! ... rather, it's a (N-group) x 2 list, where each row contains the index
+  ! to point1 and point2 for a pair in a given group
+  function GrabGroupPairs (group,N,groupings) result (pairs)
+    integer :: group ! the group that we need to isolate
+    integer :: N     ! total number of points
+    integer :: pairs (N-group,2)
+    integer :: groupings (N*(N-1)/2, 3)
+    integer :: i,pair
+
+    write (*,*) 
+
+    pair = 1
+    do i=1,size(groupings(:,1))
+      if (groupings(i,3) == group) then
+        pairs(pair,:) = groupings(i,1:2)
+        pair = pair + 1
+      end if
+    end do
+
+  end function 
+
+
   ! calculate the distance between two points in D dimensions
   function distance (point1, point2)
     real :: point1(:), point2(:)

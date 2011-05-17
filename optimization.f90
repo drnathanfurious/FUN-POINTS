@@ -13,6 +13,20 @@ module optimization_module
   type nlo_fdata_type
     integer :: number_of_points
     integer :: dimensions
+    ! list of groups to which each pair of points belongs. this should be
+    ! N*(N-1)/2 x 3, where each row contains the index to pointA, pointB, and
+    ! the group in which it belongs
+    ! 
+    ! i.e. 
+    ! [[1,2,1], [1,3,2], [1,4,2], [2,3,3]]
+    ! means the connection from point 1 to 2 is in group 1,
+    !   the connection from point 1 to 3 is in group 2, etc.
+    !
+    ! (1,2) = group 1
+    ! (1,3) = group 2
+    ! (1,4) = group 2 
+    ! (2,3) = group 3
+    integer,pointer :: groupings(:,:)  
   end type nlo_fdata_type
 
   type opt_function_type
@@ -110,12 +124,12 @@ module optimization_module
 
   ! fitness function for nlopt
   subroutine f_opt(fitness, number_of_points, points, grad, need_gradient, f_data)
-    type(nlo_fdata_type) :: f_data
+    type(nlo_fdata_type),intent(in) :: f_data
     real, intent(out) :: fitness ! fitness
-    integer :: number_of_points
-    real :: points(f_data%number_of_points,f_data%dimensions)
-    real :: grad(f_data%number_of_points)
-    integer :: need_gradient
+    integer,intent(in) :: number_of_points
+    real,intent(in) :: points(f_data%number_of_points,f_data%dimensions)
+    real,intent(in) :: grad(f_data%number_of_points)
+    integer,intent(in) :: need_gradient
 
     ! distances is a list of all the distances
     real :: distances(f_data%number_of_points * (f_data%number_of_points-1) / 2)
@@ -127,9 +141,6 @@ module optimization_module
     ! Sort the distances.  The variable natural_order is returned by the sort
     ! command, it tells how the rows were changed.
     call Qsort(distances,natural_order)
-    write (*,*) distances
-    write (*,*)
-    write (*,*) natural_order
 
     fitness = CalcFitness(f_data%number_of_points,distances,natural_order)
 
