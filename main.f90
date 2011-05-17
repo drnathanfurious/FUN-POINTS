@@ -6,14 +6,17 @@ program main
 
   ! this just makes things pretty and keeps all the derived types in one place
   use points_module
-  use stick_module
   use optimization_module
   use sort_module
+
+
   implicit none
 
 
   integer,parameter :: number_of_points = 5
   integer,parameter :: dimensions = 2
+
+
 
 
   !!!!!
@@ -24,54 +27,33 @@ program main
   ! using the idea of an upper triangular adjaceny matrix to track
   ! distances between points...
   real,target :: adjacency_matrix (number_of_points,number_of_points)
-
+  ! The optimization function data to be passed around during the minimization
   type(opt_function_type) :: opt_function
 
-  type(stick_type) :: sticks(number_of_points * (number_of_points -1) / 2)
-  
-  integer :: i,j,k
-  real :: tmp
 
-  opt_function%ires=0
 
-  ! randomly select points in the plane
-  call init_random_seed()
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Main routine for optimization
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   points = InitializePoints(number_of_points,dimensions)
-  ! assign the points and adjacency matrix to the opt_function structure
+
+  ! assign the points and adjacency matrix in the opt_function structure
   opt_function%f_data%points => points
   opt_function%f_data%adjacency_matrix => adjacency_matrix
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  ! set up the bundle of sticks -- to be used in the monte carlo routine
   call PrintPoints(points)
-  sticks = BundleSticksFromPoints (points)
-  call InitializeStickGroups(sticks)
-  !call PrintSticks(sticks)
-
-
-  ! initialize the optimization routine
-  call InitOptimizationFunction(opt_function)
-
-  !!!!!!!!!!!!!!!!!!!!!! 
-  ! start optimization !
-  call nlo_optimize(opt_function%ires, opt_function%opt, points, opt_function%minf)
-
-  if (opt_function%ires.lt.0) then 
-    write(*,*) "nlopt failed! This reflects poorly on you."
-  else
-    !write(*,*) "found min at "
-    !call PrintResults(points)
-    !  call PrintSticks(sticks)
-    !do i=1,number_of_points
-    !  write(*,*) points(i,:)
-    !end do
-    write(*,*) "# minimum ", opt_function%minf
-  end if
-
+  call RunOptimization (opt_function, points)
   call PrintPoints(points)
 
-  !!!!! clean up
-  call nlo_destroy(opt_function%opt)
+
+
+
+
+
+
+
+
 
   contains
 
