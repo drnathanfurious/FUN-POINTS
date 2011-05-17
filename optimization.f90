@@ -13,8 +13,6 @@ module optimization_module
   type nlo_fdata_type
     integer :: number_of_points
     integer :: dimensions
-    real,pointer :: points(:,:) ! positions in the system
-    real,pointer :: adjacency_matrix(:,:) ! adj. matrix of inter-point distances
   end type nlo_fdata_type
 
   type opt_function_type
@@ -31,17 +29,12 @@ module optimization_module
   ! initialize optimization function
   subroutine InitOptimizationFunction (opt_func)
     type(opt_function_type), intent(inout) :: opt_func
-    integer :: N, D
-    N = opt_func%f_data%number_of_points
-    D = opt_func%f_data%dimensions
-
-    ! randomly select points in the plane
-    call init_random_seed()
 
     ! create optimization function
     opt_func%opt = 0
 
-    call nlo_create(opt_func%opt, NLOPT_LN_NELDERMEAD, D*N)
+    call nlo_create(opt_func%opt, NLOPT_LN_NELDERMEAD,  &
+        opt_func%f_data%number_of_points * opt_func%f_data%dimensions)
 
     ! lower bounds
     call nlo_set_lower_bounds1(opt_func%ires, opt_func%opt, 0.0d0)
@@ -65,7 +58,7 @@ module optimization_module
 
     ! stopping criteria... 
     ! not sure whether ftol or xtol works better
-    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-16)
+    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-25)
     if(opt_func%ires.lt.0) then
       write(*,*) "set_xtol_abs1 failed"
     end if
@@ -76,6 +69,8 @@ module optimization_module
     !end if
 
   end subroutine InitOptimizationFunction
+
+
 
 
   ! The main routine for running an optimization on a set of points to get a
@@ -107,6 +102,7 @@ module optimization_module
 
     !!!!! clean up
     call nlo_destroy(opt_function%opt)
+
   end subroutine RunOptimization
 
 
@@ -122,18 +118,9 @@ module optimization_module
     integer :: need_gradient
 
     ! distances is a list of all the distances
-    real :: distances(          &
-                      f_data%number_of_points * (f_data%number_of_points-1) / 2  &
-                     )
+    real :: distances(f_data%number_of_points * (f_data%number_of_points-1) / 2)
 
-    integer :: natural_order(                                                &
-                  f_data%number_of_points * (f_data%number_of_points-1) / 2  &
-               )
-
-    integer :: i,j,k
-    integer :: N   ! number of points, again :)
-    N = f_data%number_of_points
-
+    integer :: natural_order(f_data%number_of_points * (f_data%number_of_points-1) / 2)
 
     distances = CalculateDistances(points)
 
@@ -141,7 +128,7 @@ module optimization_module
     ! command, it tells how the rows were changed.
     call Qsort(distances,natural_order)
 
-    fitness = CalcFitness(N,distances,natural_order)
+    fitness = CalcFitness(f_data%number_of_points,distances,natural_order)
 
   end subroutine f_opt
 
