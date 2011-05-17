@@ -46,9 +46,9 @@ contains
   end function distance
 
 
-  function CalculateDistances (points) result (sticks)
+  function CalculateDistances (points) result (distances)
     real :: points(:,:)
-    real :: sticks(size(points(:,1))*(size(points(:,1))-1))
+    real :: distances(size(points(:,1))*(size(points(:,1))-1))
     integer :: i,j,k, N
 
     N = size(points(:,1))
@@ -57,7 +57,7 @@ contains
     k=1
     do i=1,N-1
       do j=i+1,N
-        sticks(k) = distance(points(i,:), points(j,:))
+        distances(k) = distance(points(i,:), points(j,:))
         k=k+1
       end do
     end do

@@ -27,6 +27,7 @@ program main
   ! using the idea of an upper triangular adjaceny matrix to track
   ! distances between points...
   real,target :: adjacency_matrix (number_of_points,number_of_points)
+  real,target :: distances(number_of_points*(number_of_points-1)/2)
   ! The optimization function data to be passed around during the minimization
   type(opt_function_type) :: opt_function
 
@@ -36,11 +37,18 @@ program main
   ! Main routine for optimization
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+  !! this random seed initializer has to be called from MAIN PROGRAM !!
+  call init_random_seed()
+
+  ! randomly select positions for the points in the plane
   points = InitializePoints(number_of_points,dimensions)
 
   ! assign the points and adjacency matrix in the opt_function structure
+  opt_function%f_data%number_of_points = number_of_points
+  opt_function%f_data%dimensions = dimensions
   opt_function%f_data%points => points
   opt_function%f_data%adjacency_matrix => adjacency_matrix
+  opt_function%f_data%distances => distances
 
   call PrintPoints(points)
   call RunOptimization (opt_function, points)
