@@ -18,7 +18,7 @@ program main
   ! fortran matrices are just arrays... but in >>> COLUMN-MAJOR ORDER <<<
   ! let's just stick with arrays...
   real, target :: points(number_of_points,dimensions)  
-  integer, target :: groupings(number_of_points*(number_of_points-1)/2, 3)
+  integer, target :: groupings(number_of_points*(number_of_points-1)/2)
 
   ! The optimization function data to be passed around during the minimization
   type(opt_function_type) :: opt_function
@@ -41,10 +41,8 @@ program main
   ! group the pairs of points into their respective length-groups
   groupings = InitPairGroupings(number_of_points)
   opt_function%f_data%groupings => groupings
-  write (*,*) transpose(opt_function%f_data%groupings)  ! this does a pretty job!
 
   call RunOptimization (opt_function, points)
-  call PrintPoints(points)
   call PrintResults(points)
 
 

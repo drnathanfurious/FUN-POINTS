@@ -26,7 +26,7 @@ module optimization_module
     ! (1,3) = group 2
     ! (1,4) = group 2 
     ! (2,3) = group 3
-    integer,pointer :: groupings(:,:)  
+    integer,pointer :: groupings(:)
   end type nlo_fdata_type
 
   type opt_function_type
@@ -142,7 +142,7 @@ module optimization_module
     ! command, it tells how the rows were changed.
     call Qsort(distances,natural_order)
 
-    fitness = CalcFitness(f_data%number_of_points,distances,natural_order)
+    fitness = CalcFitness(f_data%number_of_points,distances,f_data%groupings)
 
   end subroutine f_opt
 
@@ -155,39 +155,34 @@ module optimization_module
       real :: fitness
       integer :: N
       real :: distances(N*(N-1)/2)
-      ! avg_distances is a list of all the averages for the n-1 groupings
-      !real :: avg_distances(size(f_data%points(:,1))-1)
-      real :: avg_distances(N-1)
       integer :: groupings(N*(N-1)/2)
-      integer :: i,j,k
 
+      real :: avg_distances(N-1)
+      integer :: i,group
+      integer :: tally(N-1)
 
-      ! Use this sorted list to define the grouping.  This leads to similiar
-      ! lengths being naturally grouped together
-      k=1
-      do i=1,N-1
-        !write(*,*) k, k+i-1, i
-        avg_distances(i) = sum(distances(k:k+i-1))/i
-        k = k+i
+      tally(:) = 0
+
+      do i=1,size(distances)
+        group = groupings(i)
+        avg_distances(group) = avg_distances(group) + distances(i)
+        tally(group) = tally(group) + 1
       end do
+      avg_distances(:) = avg_distances(:) / tally(:)
   
 
       ! based upon this average, the fitness can be calculated
-      fitness=0
-      k=1
-      do i=1,N-1
-        do j=i+1,N
-          fitness = fitness + abs(distances(groupings(k)) - avg_distances(j))
-          !fitness = fitness + abs((distances(groupings(k)) - &
-            !avg_distances(j))/(0.5*(distances(groupings(k)) + avg_distances(j))) )
-          k=k+1
-        end do
+      fitness=0.0
+      do i=1,size(distances)
+        group = groupings(i)
+        fitness = fitness + abs((distances(i) - avg_distances(group))/(0.5*(distances(i) + avg_distances(group))) )
       end do
   
+      ! add a penalty for two groups being close to each other in length?
       do i=1,N-2
         fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
       end do
-      fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
+        fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
 
   end function CalcFitness
 

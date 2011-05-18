@@ -37,15 +37,13 @@ contains
 
   ! initialize the groupings of pair of points
   function InitPairGroupings (N) result (groupings)
-    integer :: groupings(N*(N-1)/2, 3)
+    integer :: groupings(N*(N-1)/2)
     integer :: N, i,j,pair
 
     pair = 1
     do i=1,N-1
       do j = i+1,N
-        groupings(pair,1) = i
-        groupings(pair,2) = j
-        groupings(pair,3) = i
+        groupings(pair) = i
         pair = pair + 1
       end do
     end do
