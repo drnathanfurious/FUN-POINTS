@@ -11,7 +11,7 @@ program main
 
   implicit none
 
-  integer,parameter :: number_of_points = 5
+  integer,parameter :: number_of_points = 7
   integer,parameter :: dimensions = 2
 
   !!!!!
@@ -19,10 +19,13 @@ program main
   ! fortran matrices are just arrays... but in >>> COLUMN-MAJOR ORDER <<<
   ! let's just stick with arrays...
   real, target :: points(number_of_points,dimensions)  
+
   integer, target :: groupings(number_of_points*(number_of_points-1)/2)
 
   ! The optimization function data to be passed around during the minimization
   type(opt_function_type) :: opt_function
+
+  real :: prev_minf
 
 
 
@@ -43,9 +46,12 @@ program main
   groupings = InitPairGroupings(number_of_points)
   opt_function%f_data%groupings => groupings
 
-  call PrintPoints(points)
-  call RunOptimization (opt_function, points)
-  call PrintPoints(points)
+
+  prev_minf = 1000.0
+
+  !call PrintPoints(points)
+  call OptimizeGroupings (prev_minf, points, opt_function)
+  !call PrintPoints(points)
   call PrintResults(points)
 
 
@@ -57,30 +63,27 @@ program main
 
 
 
-  contains
+contains
 
   ! pretty print the results as pairs of points (lines)
   subroutine PrintResults(points) 
     real, intent(in), dimension(:,:) :: points
-    integer :: i,j,k,N
+    integer :: i,j,N
     !real :: sticks(size(points(:,1))*(size(points(:,1))-1)/2)
     !integer :: natural_order(size(points(:,1))*(size(points(:,1))-1)/2)
     N = size(points(:,1))
     ! calculate lengths of all the sticks
-    k=1
     do i=1,N-1
-      do j=i+1,N
+    do j=i+1,N
 
-        write(*,200) &
-            i, j,    &
-            points(i,:), points(j,:),   &
-            distance(points(i,:), points(j,:))
+    write(*,200) &
+    i, j,    &
+    points(i,:), points(j,:),   &
+    distance(points(i,:), points(j,:))
 
-        200 format('(',2I3') :: ', '(',2f6.3,')', '(',2f6.3,')', " ---> ", f9.4)
+    200 format('(',2I3') :: ', '(',2f6.3,')', '(',2f6.3,')', " ---> ", f9.4)
 
-        k=k+1
-
-      end do
+    end do
     end do
 
   end subroutine PrintResults

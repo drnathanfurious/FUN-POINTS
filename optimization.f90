@@ -13,20 +13,12 @@ module optimization_module
   type nlo_fdata_type
     integer :: number_of_points
     integer :: dimensions
-    ! list of groups to which each pair of points belongs. this should be
-    ! N*(N-1)/2 x 3, where each row contains the index to pointA, pointB, and
-    ! the group in which it belongs
-    ! 
-    ! i.e. 
-    ! [[1,2,1], [1,3,2], [1,4,2], [2,3,3]]
-    ! means the connection from point 1 to 2 is in group 1,
-    !   the connection from point 1 to 3 is in group 2, etc.
-    !
-    ! (1,2) = group 1
-    ! (1,3) = group 2
-    ! (1,4) = group 2 
-    ! (2,3) = group 3
-    integer,pointer :: groupings(:)
+    ! groupings are ordered by point pairs. The first element is for the pair
+    ! (1,2), the 2nd element for (1,3)... (1,N)
+    ! then start (2,3), (2,4) ..., (2,N)....
+    ! finally the last elements are ..., (N-3,N), (N-2,N), (N-1,N)
+    ! each element contains the integer id of the group that the pair belongs to
+    integer,pointer :: groupings(:) 
   end type nlo_fdata_type
 
   type opt_function_type
@@ -111,7 +103,6 @@ module optimization_module
       !do i=1,number_of_points
       !  write(*,*) points(i,:)
       !end do
-      write(*,*) "# minimum ", opt_function%minf
     end if
 
     !!!!! clean up
@@ -186,5 +177,22 @@ module optimization_module
 
   end function CalcFitness
 
+
+  subroutine OptimizeGroupings (prev_minf, points, opt_function)
+    type(opt_function_type) :: opt_function
+    real :: points(:,:)
+    real,parameter :: tol = 1.0E-14 ! tolerance
+    real :: prev_minf
+    integer,parameter :: maxtrys = 250
+    integer :: attempt
+
+    attempt = 1
+    do while (prev_minf - opt_function%minf > tol .and. attempt < maxtrys )
+      call RunOptimization (opt_function, points)
+      attempt = attempt + 1
+      write (*,100) attempt, opt_function%minf
+      100 format(1I, 2e11.3)
+    end do
+  end subroutine OptimizeGroupings
   
 end module optimization_module

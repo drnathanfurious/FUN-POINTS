@@ -17,6 +17,18 @@ contains
     deallocate(seed) 
   end subroutine init_random_seed
 
+  ! returns a randomly chosen integer in the range [1,val] (inclusive)
+  function RandomInt (val) result (res)
+    integer :: val, res
+    real :: rnum
+
+    call random_number(rnum)
+    res = int(rnum*val)+1
+
+  end function RandomInt
+
+
+    
   ! gives each point in the system a random position
   function InitializePoints (num_points,dimensions) result (points)
     integer :: i,j, num_points,dimensions
@@ -50,6 +62,24 @@ contains
 
   end function InitPairGroupings
 
+
+  function RandomlySwapGrouping (groupings) result (new_groupings)
+    integer :: groupings(:)
+    integer :: new_groupings(size(groupings)), N, i,j,tmp
+    real :: rnum
+    N = size(groupings)
+
+    i = RandomInt(N)
+    j = RandomInt(N)
+
+    ! swap the length groups of the two randomly chosen pairs
+    tmp = groupings(i)
+    groupings(i) = groupings(j)
+    groupings(j) = tmp
+
+    new_groupings = groupings
+
+  end function RandomlySwapGrouping
 
   ! grab the pairs of points for a particular group
   ! the returned list from this function is a list of pairs of points
