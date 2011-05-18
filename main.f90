@@ -6,6 +6,7 @@ program main
 
   ! this just makes things pretty and keeps all the derived types in one place
   use points_module
+  use stick_module
   use optimization_module
 
   implicit none
@@ -18,7 +19,7 @@ program main
   ! fortran matrices are just arrays... but in >>> COLUMN-MAJOR ORDER <<<
   ! let's just stick with arrays...
   real, target :: points(number_of_points,dimensions)  
-  integer, target :: groupings(number_of_points*(number_of_points-1)/2, 3)
+  type(stick_type),target :: sticks(number_of_points*(number_of_points-1)/2)
 
   ! The optimization function data to be passed around during the minimization
   type(opt_function_type) :: opt_function
@@ -35,24 +36,18 @@ program main
   ! randomly select positions for the points in the plane
   points = InitializePoints(number_of_points,dimensions)
 
+  ! create the "sticks" that connect the points in the plane
+  sticks = BundleSticksFromPoints(points)
+  call InitializeStickGroups (sticks)
+
+  opt_function%f_data%sticks => sticks
+
   opt_function%f_data%number_of_points = number_of_points
   opt_function%f_data%dimensions = dimensions
 
-  ! group the pairs of points into their respective length-groups
-  groupings = InitPairGroupings(number_of_points)
-  opt_function%f_data%groupings => groupings
-  write (*,*) transpose(opt_function%f_data%groupings)  ! this does a pretty job!
-
+  call PrintPoints(points)
   call RunOptimization (opt_function, points)
   call PrintPoints(points)
-  call PrintResults(points)
-
-
-
-
-
-
-
 
 
 

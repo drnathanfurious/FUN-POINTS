@@ -1,6 +1,7 @@
 
 module optimization_module
   use points_module
+  use stick_module
   use sort_module
 
   implicit none
@@ -27,6 +28,7 @@ module optimization_module
     ! (1,4) = group 2 
     ! (2,3) = group 3
     integer,pointer :: groupings(:,:)  
+    type(stick_type), pointer :: sticks(:)
   end type nlo_fdata_type
 
   type opt_function_type
@@ -91,7 +93,8 @@ module optimization_module
   ! local minimum
   subroutine RunOptimization (opt_function, points)
     type(opt_function_type) :: opt_function
-    real :: points(:,:)  
+    !real :: points(opt_function%f_data%number_of_points,opt_function%f_data%dimensions)
+    real :: points(opt_function%f_data%number_of_points,opt_function%f_data%dimensions)
 
     opt_function%ires=0
 
@@ -124,25 +127,16 @@ module optimization_module
 
   ! fitness function for nlopt
   subroutine f_opt(fitness, number_of_points, points, grad, need_gradient, f_data)
-    type(nlo_fdata_type),intent(in) :: f_data
-    real, intent(out) :: fitness ! fitness
-    integer,intent(in) :: number_of_points
-    real,intent(in) :: points(f_data%number_of_points,f_data%dimensions)
-    real,intent(in) :: grad(f_data%number_of_points)
-    integer,intent(in) :: need_gradient
+    type(nlo_fdata_type) :: f_data
+    real :: fitness ! fitness
+    integer :: number_of_points
+    real :: points(f_data%number_of_points,f_data%dimensions)
+    real :: grad(f_data%number_of_points)
+    integer :: need_gradient
 
-    ! distances is a list of all the distances
-    real :: distances(f_data%number_of_points * (f_data%number_of_points-1) / 2)
+    call UpdateStickLengths(f_data%sticks)
 
-    integer :: natural_order(f_data%number_of_points * (f_data%number_of_points-1) / 2)
-
-    distances = CalculateDistances(points)
-
-    ! Sort the distances.  The variable natural_order is returned by the sort
-    ! command, it tells how the rows were changed.
-    call Qsort(distances,natural_order)
-
-    fitness = CalcFitness(f_data%number_of_points,distances,natural_order)
+    fitness = CalcFitness(f_data%number_of_points,f_data%sticks)
 
   end subroutine f_opt
 
@@ -151,42 +145,26 @@ module optimization_module
 
 
 
-  function CalcFitness (N,distances,groupings) result (fitness)
+  function CalcFitness (N,sticks) result (fitness)
+      integer :: N  ! number of points
+      type(stick_type),target :: sticks(:)
       real :: fitness
-      integer :: N
-      real :: distances(N*(N-1)/2)
-      real :: avg_distances(N-1)
-      integer :: groupings(N*(N-1)/2)
-      integer :: i,j,k
+      real :: avg_distances(N-1)  ! average distance of all members of a given group
+      integer :: i,group
+      integer,pointer :: groups(:)
+
+      groups => sticks(:)%group
 
 
-      ! Use this sorted list to define the grouping.  This leads to similiar
-      ! lengths being naturally grouped together
-      k=1
-      do i=1,N-1
-        !write(*,*) k, k+i-1, i
-        avg_distances(i) = sum(distances(k:k+i-1))/i
-        k = k+i
-      end do
-  
+      ! the list of average group lengths
+      ! the first group has the most members, the last group has only 1 member
+      avg_distances = CalculateAverageLengthsByGroup (sticks)
 
       ! based upon this average, the fitness can be calculated
-      fitness=0
-      k=1
-      do i=1,N-1
-        do j=i+1,N
-          !fitness = fitness + abs(distances(groupings(k)) - avg_distances(j))
-          fitness = fitness + abs((distances(groupings(k)) - &
-            avg_distances(j))/(0.5*(distances(groupings(k)) + avg_distances(j))) )
-          k=k+1
-        end do
-      end do
+      ! for now we look at the difference between the length of a stick, and the
+      ! average for the group that it's a part of
+      fitness = sum( abs(sticks(:)%length - avg_distances(sticks(:)%group)) )
   
-      !do i=1,N-2
-      !  fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
-      !end do
-      !fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
-
   end function CalcFitness
 
   

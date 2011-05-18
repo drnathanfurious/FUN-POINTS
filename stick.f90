@@ -6,6 +6,7 @@ module stick_module
 
   type stick_type
     real,pointer :: point1(:), point2(:)  ! the 2 points that make up the stick
+    integer :: id_1, id_2 ! indices of the two points from the point-array
     real :: length  ! the length of the stick
     integer :: group  ! the group identifier that the stick is in
   end type stick_type
@@ -13,12 +14,15 @@ module stick_module
 contains
 
 
-  function MakeStick (point1, point2) result (stick)
+  function MakeStick (id_1, id_2, point1, point2) result (stick)
     type(stick_type) :: stick
     real,target :: point1(:), point2(:)
+    integer :: id_1,id_2
 
     stick%point1 => point1
     stick%point2 => point2
+    stick%id_1 = id_1
+    stick%id_2 = id_2
     stick%length = distance(point1,point2)
     stick%group = 0 ! null this out for now...
   end function MakeStick
@@ -35,7 +39,7 @@ contains
     k = 1
     do i=1,N-1
       do j=i+1,N
-        bundle(k) = MakeStick(points(i,:), points(j,:))
+        bundle(k) = MakeStick(i,j,points(i,:), points(j,:))
         k = k + 1
       end do
     end do
@@ -43,7 +47,8 @@ contains
   end function BundleSticksFromPoints
 
 
-  ! Naively assign sticks to be in different groupings by lengths
+
+  ! Naively assign sticks to be in different groupings
   subroutine InitializeStickGroups (sticks)
     type(stick_type) :: sticks(:)
     integer :: num_groups, i, stick, group
@@ -62,14 +67,50 @@ contains
   end subroutine InitializeStickGroups
 
 
+  subroutine UpdateStickLengths (sticks)
+    type(stick_type) :: sticks(:)
+    integer :: i
+
+    do i=1,size(sticks)
+      sticks(i)%length = distance(sticks(i)%point1, sticks(i)%point2)
+    end do
+
+  end subroutine UpdateStickLengths
+
+
+  function CalculateAverageLengthsByGroup (sticks) result (lengths)
+    type(stick_type) :: sticks(:)
+    ! this is the ugly way to figure out how many length groups there are
+    real :: lengths(int(sqrt(float(size(sticks))*2.)))  
+    integer :: i,group,N
+    real :: length
+
+    ! number of points == number of length-groups + 1
+    N = size(lengths)+1
+
+    ! sum all the lengths in each group
+    do i=1,size(sticks)
+      group = sticks(i)%group
+      length = distance (sticks(i)%point1,sticks(i)%point2)
+      lengths(group) = lengths(group) + length
+    end do
+    ! then divide by the number of sticks in each group... to form the average
+    do i=1,size(lengths)
+      lengths(i) = lengths(i) / (N-i)
+    end do
+
+  end function CalculateAverageLengthsByGroup
+
+
+
+
   ! pretty printer for sticks
   subroutine PrintStick (stick)
     type(stick_type) :: stick
-    write (*,100) stick%point1, stick%point2, stick%length, stick%group
-    100 format ("(",2f6.3,")","(",2f6.3,")",  &
+    write (*,100) stick%id_1, stick%point1, stick%id_2, stick%point2, stick%length, stick%group
+    100 format (I3, ":", "(", 2f6.3, ")", I3, ":", "(", 2f6.3, ")",  &
                 "  length: ", f6.3, "  group: ", i3)
   end subroutine PrintStick
-
 
 
   subroutine PrintSticks (sticks)
@@ -81,5 +122,6 @@ contains
       call PrintStick(sticks(i))
     end do
   end subroutine PrintSticks
+
 
 end module stick_module
