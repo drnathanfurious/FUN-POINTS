@@ -30,9 +30,4 @@ $(TARGET) : $(OBJS)
 	$(F90) $(FFLAGS) -c $*.f90 $(INCLUDE_PATH)
 
 clean:
-	rm *.o *.mod out
-
-# What does this line do (besides ruin everything)? -web
-#  this line is the same as the .F90.o line... except that you set up Makefiles in a way I haven't seen before... so now it does nothing. -es
-#%.o: %.f90
-#	$(F90) $(FFLAGS) -c -o $@ $<
+	rm *.o *.mod out a.out

@@ -42,7 +42,9 @@ program main
   groupings = InitPairGroupings(number_of_points)
   opt_function%f_data%groupings => groupings
 
+  call PrintPoints(points)
   call RunOptimization (opt_function, points)
+  call PrintPoints(points)
   call PrintResults(points)
 
 
