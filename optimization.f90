@@ -26,7 +26,7 @@ module optimization_module
     ! (1,3) = group 2
     ! (1,4) = group 2 
     ! (2,3) = group 3
-    integer,pointer :: groupings(:)
+    integer,pointer :: groupings(:,:)
   end type nlo_fdata_type
 
   type opt_function_type
@@ -72,7 +72,7 @@ module optimization_module
 
     ! stopping criteria... 
     ! not sure whether ftol or xtol works better
-    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-14)
+    call nlo_set_xtol_abs1(opt_func%ires, opt_func%opt, 1.0E-16)
     if(opt_func%ires.lt.0) then
       write(*,*) "set_xtol_abs1 failed"
     end if
@@ -140,7 +140,7 @@ module optimization_module
 
     ! Sort the distances.  The variable natural_order is returned by the sort
     ! command, it tells how the rows were changed.
-    call Qsort(distances,natural_order)
+    !call Qsort(distances,natural_order)
 
     fitness = CalcFitness(f_data%number_of_points,distances,f_data%groupings)
 
@@ -149,13 +149,11 @@ module optimization_module
 
 
 
-
-
   function CalcFitness (N,distances,groupings) result (fitness)
       real :: fitness
       integer :: N
       real :: distances(N*(N-1)/2)
-      integer :: groupings(N*(N-1)/2)
+      integer :: groupings(N*(N-1)/2,3)
 
       real :: avg_distances(N-1)
       integer :: i,group
@@ -164,7 +162,7 @@ module optimization_module
       tally(:) = 0
 
       do i=1,size(distances)
-        group = groupings(i)
+        group = groupings(i,3)
         avg_distances(group) = avg_distances(group) + distances(i)
         tally(group) = tally(group) + 1
       end do
@@ -174,15 +172,15 @@ module optimization_module
       ! based upon this average, the fitness can be calculated
       fitness=0.0
       do i=1,size(distances)
-        group = groupings(i)
-        fitness = fitness + abs((distances(i) - avg_distances(group))/(0.5*(distances(i) + avg_distances(group))) )
+        group = groupings(i,3)
+        fitness = fitness + abs((distances(i) - avg_distances(group))/(0.5*(distances(i) + avg_distances(group))))
       end do
   
       ! add a penalty for two groups being close to each other in length?
-      do i=1,N-2
-        fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
-      end do
-        fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
+      !do i=1,N-2
+      !  fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
+      !end do
+      !  fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
 
   end function CalcFitness
 
