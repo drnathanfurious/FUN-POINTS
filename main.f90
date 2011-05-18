@@ -1,4 +1,5 @@
 ! FUN-POINTS
+
 ! 
 ! Solution to this Erdos thing.  You could win $50!
 
