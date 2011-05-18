@@ -19,7 +19,7 @@ if test X"$FC" = X"gfortran"; then
 fi
 
 if test X"$FC" = X"ifort"; then
-  FCFLAGS="$FCFLAGS -fast -i8 -d8"
+  FCFLAGS="$FCFLAGS -fast -i8 -r8"
 fi
 
 # make sure compiler does freeform files
