@@ -155,8 +155,6 @@ module optimization_module
       real :: fitness
       integer :: N
       real :: distances(N*(N-1)/2)
-      ! avg_distances is a list of all the averages for the n-1 groupings
-      !real :: avg_distances(size(f_data%points(:,1))-1)
       real :: avg_distances(N-1)
       integer :: groupings(N*(N-1)/2)
       integer :: i,j,k
@@ -177,17 +175,17 @@ module optimization_module
       k=1
       do i=1,N-1
         do j=i+1,N
-          fitness = fitness + abs(distances(groupings(k)) - avg_distances(j))
-          !fitness = fitness + abs((distances(groupings(k)) - &
-            !avg_distances(j))/(0.5*(distances(groupings(k)) + avg_distances(j))) )
+          !fitness = fitness + abs(distances(groupings(k)) - avg_distances(j))
+          fitness = fitness + abs((distances(groupings(k)) - &
+            avg_distances(j))/(0.5*(distances(groupings(k)) + avg_distances(j))) )
           k=k+1
         end do
       end do
   
-      do i=1,N-2
-        fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
-      end do
-      fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
+      !do i=1,N-2
+      !  fitness = fitness + abs(avg_distances(i)-avg_distances(i+1))
+      !end do
+      !fitness = fitness + abs(avg_distances(1)-avg_distances(N-1))
 
   end function CalcFitness
 
