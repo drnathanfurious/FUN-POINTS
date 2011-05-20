@@ -178,21 +178,55 @@ module optimization_module
   end function CalcFitness
 
 
-  subroutine OptimizeGroupings (prev_minf, points, opt_function)
+  subroutine OptimizePoints (points, opt_function)
     type(opt_function_type) :: opt_function
-    real :: points(:,:)
-    real,parameter :: tol = 1.0E-14 ! tolerance
+    real :: points(:,:), prev_points(size(points(:,1)),size(points(1,:)))
     real :: prev_minf
-    integer,parameter :: maxtrys = 250
+    real :: run_min
+    logical :: accepted ! if the move was accepted or not
+    real,parameter :: tol = 1.0E-14 ! tolerance
+    integer,parameter :: maxtrys = 250   ! max number of attempts to make before bailing
     integer :: attempt
 
-    attempt = 1
-    do while (prev_minf - opt_function%minf > tol .and. attempt < maxtrys )
-      call RunOptimization (opt_function, points)
-      attempt = attempt + 1
-      write (*,100) attempt, opt_function%minf
-      100 format(1I, 2e11.3)
+
+    opt_function%minf = 1000.0  ! set this high to start out
+
+    accepted = .true.
+
+    do  while (accepted) 
+      prev_minf = opt_function%minf
+      prev_points = points
+
+
+      run_min = opt_function%minf + 1000.0  ! guarantee that we loop through at least once!
+
+      attempt = 1
+      do while (abs(run_min - opt_function%minf) > tol .and. attempt < maxtrys )
+        call RunOptimization (opt_function, points)
+        run_min = opt_function%minf
+        attempt = attempt + 1
+        !write (*,100) attempt, opt_function%minf
+        !100 format(1I, 2e11.3)
+      end do
+      !call OptimizePoints (points, opt_function)
+
+      ! If the optimized fitness/energy is not as good as what we started with
+      ! then restore the previous state
+      if (prev_minf - opt_function%minf < tol) then
+        opt_function%minf = prev_minf
+        points = prev_points
+        !write (*,*) "reject: ", prev_minf - opt_function%minf
+        accepted = .false.
+
+        ! otherwise, always accept a lower energy/fitness
+      else 
+        !write (*,*) "accept: ", prev_minf - opt_function%minf
+        accepted = .true.
+      end if
+
     end do
-  end subroutine OptimizeGroupings
-  
+
+
+  end subroutine OptimizePoints
+
 end module optimization_module
