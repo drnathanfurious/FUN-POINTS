@@ -229,4 +229,72 @@ module optimization_module
 
   end subroutine OptimizePoints
 
+
+
+
+  subroutine MonteCarlo (points, opt_function)
+    real :: points(:,:)  
+    type(opt_function_type) :: opt_function
+
+    real :: prev_points(size(points(:,1)), size(points(1,:)))
+    integer :: prev_groupings(size(points(:,1))*(size(points(:,1))-1)/2)
+    real :: prev_minf
+    real :: monte, rnum
+    real, parameter :: temp = 50.0
+
+    integer :: accepted
+
+
+    ! set up to restore the previous state if the move is rejected
+    prev_minf = 1000.0
+    prev_groupings = opt_function%f_data%groupings
+    prev_points = points
+
+    accepted = 0
+    do while (accepted < 250)
+    call OptimizePoints (points, opt_function)
+
+    ! if the previous state was a lower/better fitness, then restore the state,
+    ! and try altering the groupings again
+    if (prev_minf < opt_function%minf) then
+
+      !monte = prev_minf - opt_function%minf
+      !monte = exp(monte/temp)
+      !rnum = RandomReal(1.0)
+      !write (*,*) monte, rnum
+
+      ! accept the move with probability exp(-E/T)
+      !if (rnum > monte) then
+        !accepted = accepted + 1
+        !prev_points = points
+        !prev_groupings = opt_function%f_data%groupings
+        !prev_minf = opt_function%minf
+        !write (*,*) opt_function%minf
+        !write (*,*) "accepted the monte!"
+      ! otherwise reject the move
+      !else
+        points = prev_points
+        opt_function%f_data%groupings = prev_groupings
+        opt_function%minf = prev_minf
+        !write (*,*) "rejected the monte..."
+      !end if
+
+      ! otherwise, accept the move, update the state, and try a new set of groupings
+    else
+      prev_points = points
+      prev_groupings = opt_function%f_data%groupings
+      prev_minf = opt_function%minf
+      accepted = accepted + 1
+      write (*,*) opt_function%minf
+    end if
+
+    ! try a new state
+    opt_function%f_data%groupings = RandomlySwapGrouping (opt_function%f_data%groupings)
+
+    end do
+
+  end subroutine MonteCarlo
+
+
+
 end module optimization_module

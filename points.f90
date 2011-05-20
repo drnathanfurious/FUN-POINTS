@@ -28,6 +28,15 @@ contains
   end function RandomInt
 
 
+  function RandomReal (val) result (res)
+    real :: res,val,rnum
+
+    call random_number(rnum)
+    res = rnum*val
+
+  end function RandomReal
+
+
     
   ! gives each point in the system a random position
   function InitializePoints (num_points,dimensions) result (points)
