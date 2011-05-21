@@ -1,5 +1,6 @@
 module points_module
 
+  use sort_module
   implicit none
 
 contains
@@ -28,12 +29,10 @@ contains
       ! give random a random coordinate in N-dimensions of the problem
       do j=1,dimensions
         call random_number(rnum)
-        points(i,j) = rnum
+        points(i,j) = ceiling(rnum*10)
       end do
     end do
   end function InitializePoints
-
-
 
   ! initialize the groupings of pair of points
   function InitPairGroupings (N) result (groupings)
@@ -99,13 +98,119 @@ contains
      distance = sqrt(sum(temp)) ! sqrt of the sum of the squares... the norm
   end function distance
 
+  ! checks for more than two colinear points in 2D
+  ! returns 1 if no more than two colinear points
+  ! returns 0 if three or more colinear points
+  ! this function only works in 2D!
+  function CheckCollinear(points) result (is)
+    real :: points(:,:)
+    integer :: N,i,j,k,is
+    N = size(points(:,1))
+    is = 1
+    ! same formula to calculate area of triangle in 2D.  If two points are
+    ! collinear the area of the triangle should be zero. Here i,j,and k
+    ! represent groupings of three.
+    do i=1,N-1
+      do j=i+1,N 
+        do k=j+1,N
+          if(points(i,1)*(points(j,2)-points(k,2))+&
+             points(j,1)*(points(k,2)-points(i,2))+&
+             points(k,1)*(points(i,2)-points(j,2)).eq.0) then
+            is = 0
+            return
+          end if
+        end do
+      end do
+    end do
+  end function CheckCollinear
+
+  ! Check whether there are more than three points on any circle.  This
+  ! function only works in 2D!  Return 0 if the condition is NOT
+  ! satisfied, and 1 if the condition is satisfied
+  function CheckCircle(points) result (is)
+    real :: points(:,:)
+    integer :: i,j,k,l,N,is
+    real :: d,c(2),r
+    N = size(points(:,1))
+    is = 1
+
+    ! unique groupings of three points
+    do i=1,N-1
+      do j=i+1,N 
+        do k=j+1,N
+          ! area of the triangle whose points are the circumcircle
+          d=2*(&
+            points(i,1)*(points(j,2)-points(k,2))+&
+            points(j,1)*(points(k,2)-points(i,2))+&
+            points(k,1)*(points(i,2)-points(j,2)))
+          ! center of circle defined by three points - x
+          c(1)=(&
+            (points(i,2)**2+points(i,1)**2)*(points(j,2)-points(k,2))+&
+            (points(j,2)**2+points(j,1)**2)*(points(k,2)-points(i,2))+&
+            (points(k,2)**2+points(k,1)**2)*(points(i,2)-points(j,2))&
+          )/d
+          ! center of circle defined by three points - y
+          c(2)=(&
+            (points(i,2)**2+points(i,1)**2)*(points(k,2)-points(j,2))+&
+            (points(j,2)**2+points(j,1)**2)*(points(i,2)-points(k,2))+&
+            (points(k,2)**2+points(k,1)**2)*(points(j,2)-points(i,2))&
+          )/d
+          ! radius of the circle
+          r=distance(c,points(i,:))
+          ! if the radius of the extra points is equal to the radius of the
+          ! circle, then they lie on that circle and we have to regect this
+          ! solution
+          do l=k+1,N
+            if(abs(distance(c,points(l,:))-r).lt.epsilon(c(1))) then
+              is = 0
+              return
+            end if
+
+          end do
+        end do
+      end do
+    end do
+
+  end function CheckCircle
+
+
+  ! check the grouping condition.  For N points we want N-1 seperate
+  ! groups.  Return 0 if the condition is NOT satisfied, return 1 if it is.
+  function CheckGroupings(points) result (is)
+    real :: points(:,:)
+    real :: distances(size(points(:,1))*(size(points(:,1))-1)/2)
+    integer :: check(size(points(:,1))*(size(points(:,1))-1)/2)
+    integer :: i,j,k,is,N,Ndist
+    real :: tmp1
+    N = size(points(:,1))
+
+    distances =  CalculateDistances(points)
+    check(:) = 0
+    is = 1
+    ! count the number of grouped pairs and put them in the check array
+    do i=1,size(distances)
+      j = count(distances.eq.distances(i))
+      check(j) = check(j) + 1
+    end do
+
+    ! check the check...
+    do i=1,N-1
+      if(check(i).ne.i) then
+        is = 0
+        return
+      end if
+    end do
+
+  end function CheckGroupings
+
 
   function CalculateDistances (points) result (distances)
     real :: points(:,:)
-    real :: distances(size(points(:,1))*(size(points(:,1))-1))
+    real :: distances(size(points(:,1))*(size(points(:,1))-1)/2)
     integer :: i,j,k, N
 
     N = size(points(:,1))
+    distances(:) = 0.0d0
 
     ! first calculate the lengths of all the sticks
     k=1
